@@ -11,7 +11,11 @@ struct ContentView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var authMessage = "Enter credentials and tap Login"
-    @State private var accessJwt: String?
+    
+    @AppStorage("userDID") private var did: String?
+    @AppStorage("accessToken") private var accessToken: String?
+    
+//    @State private var accessJwt: String?
     @State private var profile: Profile?
     
     @State private var postText = ""
@@ -41,27 +45,31 @@ struct ContentView: View {
                     }
                 
                     TextField("Write your post here", text: $postText)
-                                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                                            .padding()
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
                                         
-                                        Button("Post to Feed") {
-                                            guard let jwt = accessJwt else { return }
-                                            BlueskyAPI.shared.postToFeed(accessJwt: jwt, text: postText) { result in
-                                                DispatchQueue.main.async {
-                                                    switch result {
-                                                    case .success:
-                                                        postMessage = "Post successful!"
-                                                        postText = "" // Clear text field after posting
-                                                    case .failure(let error):
-                                                        postMessage = "Error posting: \(error.localizedDescription)"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        .padding()
-                                        
-                                        Text(postMessage)
-                                            .padding()
+                    Button("Post to Feed") {
+                        guard let jwt = accessToken, let userDID = did else {
+                            postMessage = "Missing authentication details!"
+                            return
+                        }
+
+                        BlueskyAPI.shared.postToFeed(accessJwt: jwt, did: userDID, text: postText) { result in
+                            DispatchQueue.main.async {
+                                switch result {
+                                case .success:
+                                    postMessage = "Post successful!"
+                                    postText = "" // Clear text field after posting
+                                case .failure(let error):
+                                    postMessage = "Error posting: \(error.localizedDescription)"
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                    
+                    Text(postMessage)
+                        .padding()
                     
                 }
             } else {
@@ -78,13 +86,15 @@ struct ContentView: View {
                         DispatchQueue.main.async {
                             switch result {
                             case .success(let auth):
-                                self.accessJwt = auth.accessJwt
+                                // Store authentication details in AppStorage
+                                self.accessToken = auth.accessJwt
+                                self.did = auth.did // Ensure the DID is stored
+
                                 authMessage = "Authenticated as \(auth.handle)"
                                 
-                                // Fetch profile
-                                if let jwt = self.accessJwt {
-                                    // Inside the success case of authentication:
-                                    BlueskyAPI.shared.fetchProfile(accessJwt: auth.accessJwt, actor: auth.handle) { profileResult in
+                                // Fetch profile after successful authentication
+                                if let jwt = self.accessToken {
+                                    BlueskyAPI.shared.fetchProfile(accessJwt: jwt, actor: auth.handle) { profileResult in
                                         DispatchQueue.main.async {
                                             switch profileResult {
                                             case .success(let profile):
@@ -94,7 +104,6 @@ struct ContentView: View {
                                             }
                                         }
                                     }
-
                                 }
                                 
                             case .failure(let error):

@@ -34,40 +34,57 @@ class BlueskyAPI {
     
     let baseURL = URL(string: "https://bsky.social/xrpc/")!
 
-    func authenticate(username: String, password: String, completion: @escaping (Result<AuthResponse, Error>) -> Void) {
-        let url = baseURL.appendingPathComponent("com.atproto.server.createSession")
+    struct SessionResponse: Codable {
+        let did: String
+        let accessJwt: String
+        let handle: String
+    }
+
+    func authenticate(username: String, password: String, completion: @escaping (Result<SessionResponse, Error>) -> Void) {
+        let url = URL(string: "https://bsky.social/xrpc/com.atproto.server.createSession")!
+
+        let body: [String: Any] = [
+            "identifier": username,
+            "password": password
+        ]
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body = ["identifier": username, "password": password]
-        
+
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
         } catch {
             completion(.failure(error))
             return
         }
-        
+
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
-            
+
             guard let data = data else {
                 completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                 return
             }
-            
+
             do {
-                let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-                completion(.success(authResponse))
+                let session = try JSONDecoder().decode(SessionResponse.self, from: data)
+                
+                // Store DID and access token
+                UserDefaults.standard.set(session.did, forKey: "userDID")
+                UserDefaults.standard.set(session.accessJwt, forKey: "accessToken")
+                UserDefaults.standard.set(session.handle, forKey: "identifier")
+                UserDefaults.standard.synchronize()
+
+                completion(.success(session))
             } catch {
                 completion(.failure(error))
             }
         }
-        
+
         task.resume()
     }
     
@@ -113,16 +130,26 @@ class BlueskyAPI {
         task.resume()
     }
 
-    func postToFeed(accessJwt: String, text: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        let url = baseURL.appendingPathComponent("app.bsky.feed.post")
+    func postToFeed(accessJwt: String, did: String, text: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        let url = URL(string: "https://bsky.social/xrpc/com.atproto.repo.createRecord")!
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(accessJwt)", forHTTPHeaderField: "Authorization")
         
+        // Generate the current timestamp in ISO 8601 format
+        let dateFormatter = ISO8601DateFormatter()
+        let createdAt = dateFormatter.string(from: Date())
+
         let body: [String: Any] = [
-            "text": text
+            "repo": did,  // Use the authenticated user's DID
+            "collection": "app.bsky.feed.post",
+            "record": [
+                "$type": "app.bsky.feed.post",
+                "text": text,
+                "createdAt": createdAt
+            ]
         ]
         
         do {
@@ -132,16 +159,26 @@ class BlueskyAPI {
             return
         }
         
-        let task = URLSession.shared.dataTask(with: request) { _, _, error in
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
+
+            if let response = response as? HTTPURLResponse {
+                print("HTTP Response: \(response.statusCode)")
+            }
+
+            if let data = data {
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("API Response: \(jsonString)")
+                }
+            }
+            
             completion(.success(()))
         }
         
         task.resume()
     }
-
 
 }
