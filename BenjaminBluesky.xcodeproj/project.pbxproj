@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		946316512D6929C2005A6172 /* BlueskyAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946316502D6929BC005A6172 /* BlueskyAPI.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		946316342D692962005A6172 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		946316232D692961005A6172 /* BenjaminBluesky.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BenjaminBluesky.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		946316332D692962005A6172 /* BenjaminBlueskyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BenjaminBlueskyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9463163D2D692962005A6172 /* BenjaminBlueskyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BenjaminBlueskyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		946316502D6929BC005A6172 /* BlueskyAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlueskyAPI.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		9463161A2D692961005A6172 = {
 			isa = PBXGroup;
 			children = (
+				946316502D6929BC005A6172 /* BlueskyAPI.swift */,
 				946316252D692961005A6172 /* BenjaminBluesky */,
 				946316362D692962005A6172 /* BenjaminBlueskyTests */,
 				946316402D692962005A6172 /* BenjaminBlueskyUITests */,
@@ -236,6 +242,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				946316512D6929C2005A6172 /* BlueskyAPI.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
