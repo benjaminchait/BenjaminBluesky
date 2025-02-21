@@ -15,9 +15,7 @@ struct ContentView: View {
     @AppStorage("userDID") private var did: String?
     @AppStorage("accessToken") private var accessToken: String?
     
-//    @State private var accessJwt: String?
     @State private var profile: Profile?
-    
     @State private var postText = ""
     @State private var postMessage = "Type a post and submit it!"
 
@@ -119,5 +117,21 @@ struct ContentView: View {
             }
         }
         .padding()
+        .onAppear {
+            // Automatically fetch profile if the user is already authenticated
+            if let jwt = accessToken, let userDID = did {
+                // User is already logged in, so fetch the profile
+                BlueskyAPI.shared.fetchProfile(accessJwt: jwt, actor: userDID) { profileResult in
+                    DispatchQueue.main.async {
+                        switch profileResult {
+                        case .success(let profile):
+                            self.profile = profile
+                        case .failure(let error):
+                            authMessage = "Error fetching profile: \(error.localizedDescription)"
+                        }
+                    }
+                }
+            }
+        }
     }
 }
