@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		943EEA7F2D693D490004CB8A /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 943EEA7E2D693D490004CB8A /* KeychainSwift */; };
 		946316512D6929C2005A6172 /* BlueskyAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946316502D6929BC005A6172 /* BlueskyAPI.swift */; };
 /* End PBXBuildFile section */
 
@@ -57,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				943EEA7F2D693D490004CB8A /* KeychainSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +120,7 @@
 			);
 			name = BenjaminBluesky;
 			packageProductDependencies = (
+				943EEA7E2D693D490004CB8A /* KeychainSwift */,
 			);
 			productName = BenjaminBluesky;
 			productReference = 946316232D692961005A6172 /* BenjaminBluesky.app */;
@@ -201,6 +204,9 @@
 			);
 			mainGroup = 9463161A2D692961005A6172;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				943EEA7D2D693D490004CB8A /* XCRemoteSwiftPackageReference "keychain-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 946316242D692961005A6172 /* Products */;
 			projectDirPath = "";
@@ -559,6 +565,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		943EEA7D2D693D490004CB8A /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/evgenyneu/keychain-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 24.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		943EEA7E2D693D490004CB8A /* KeychainSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 943EEA7D2D693D490004CB8A /* XCRemoteSwiftPackageReference "keychain-swift" */;
+			productName = KeychainSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9463161B2D692961005A6172 /* Project object */;
 }

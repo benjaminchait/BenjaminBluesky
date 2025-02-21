@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import KeychainSwift
 
 struct AuthResponse: Codable {
     let accessJwt: String
@@ -33,6 +34,7 @@ class BlueskyAPI {
     static let shared = BlueskyAPI()
     
     let baseURL = URL(string: "https://bsky.social/xrpc/")!
+    let keychain = KeychainSwift()
 
     struct SessionResponse: Codable {
         let did: String
@@ -73,11 +75,16 @@ class BlueskyAPI {
             do {
                 let session = try JSONDecoder().decode(SessionResponse.self, from: data)
                 
-                // Store DID and access token
-                UserDefaults.standard.set(session.did, forKey: "userDID")
-                UserDefaults.standard.set(session.accessJwt, forKey: "accessToken")
-                UserDefaults.standard.set(session.handle, forKey: "identifier")
-                UserDefaults.standard.synchronize()
+                // Old code: UserDefaults
+                // UserDefaults.standard.set(session.did, forKey: "userDID")
+                // UserDefaults.standard.set(session.accessJwt, forKey: "accessToken")
+                // UserDefaults.standard.set(session.handle, forKey: "identifier")
+                // UserDefaults.standard.synchronize()
+                
+                // New code: Store in Keychain
+                self.keychain.set(session.accessJwt, forKey: "accessToken")
+                self.keychain.set(session.did, forKey: "userDID")
+                self.keychain.set(session.handle, forKey: "identifier")
 
                 completion(.success(session))
             } catch {
@@ -89,6 +96,9 @@ class BlueskyAPI {
     }
     
     func fetchProfile(accessJwt: String, actor: String, completion: @escaping (Result<Profile, Error>) -> Void) {
+        let accessToken = keychain.get("accessToken") ?? accessJwt
+        let userDID = keychain.get("userDID") ?? actor // Use actor as fallback
+        
         var components = URLComponents(string: "https://bsky.social/xrpc/app.bsky.actor.getProfile")!
         components.queryItems = [URLQueryItem(name: "actor", value: actor)] // Add the actor parameter
         
@@ -131,6 +141,9 @@ class BlueskyAPI {
     }
 
     func postToFeed(accessJwt: String, did: String, text: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        let accessToken = keychain.get("accessToken") ?? accessJwt
+        let userDID = keychain.get("userDID") ?? did
+        
         let url = URL(string: "https://bsky.social/xrpc/com.atproto.repo.createRecord")!
         
         var request = URLRequest(url: url)
@@ -143,7 +156,7 @@ class BlueskyAPI {
         let createdAt = dateFormatter.string(from: Date())
 
         let body: [String: Any] = [
-            "repo": did,  // Use the authenticated user's DID
+            "repo": userDID,  // Use the authenticated user's DID
             "collection": "app.bsky.feed.post",
             "record": [
                 "$type": "app.bsky.feed.post",

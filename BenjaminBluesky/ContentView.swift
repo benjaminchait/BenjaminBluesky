@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import KeychainSwift
 
 struct ContentView: View {
+    private let keychain = KeychainSwift()
+    
     @State private var username = ""
     @State private var password = ""
     @State private var authMessage = "Enter credentials and tap Login"
@@ -69,6 +72,14 @@ struct ContentView: View {
                     Text(postMessage)
                         .padding()
                     
+//                    Button("Logout") {
+//                        // Clear Keychain on logout
+//                        keychain.delete("accessToken")
+//                        keychain.delete("userDID")
+//                        authMessage = "Logged out"
+//                        profile = nil  // Clear the profile data
+//                    }
+                    
                 }
             } else {
                 TextField("Username", text: $username)
@@ -84,15 +95,14 @@ struct ContentView: View {
                         DispatchQueue.main.async {
                             switch result {
                             case .success(let auth):
-                                // Store authentication details in AppStorage
-                                self.accessToken = auth.accessJwt
-                                self.did = auth.did // Ensure the DID is stored
-
-                                authMessage = "Authenticated as \(auth.handle)"
+                                // Store JWT and DID securely in Keychain
+                                keychain.set(auth.accessJwt, forKey: "accessToken")
+                                keychain.set(auth.did, forKey: "userDID")
+                                authMessage = "Authenticated as \(auth.did)"
                                 
-                                // Fetch profile after successful authentication
-                                if let jwt = self.accessToken {
-                                    BlueskyAPI.shared.fetchProfile(accessJwt: jwt, actor: auth.handle) { profileResult in
+                                // Fetch profile after successful login
+                                if let jwt = keychain.get("accessToken"), let userDID = keychain.get("userDID") {
+                                    BlueskyAPI.shared.fetchProfile(accessJwt: jwt, actor: userDID) { profileResult in
                                         DispatchQueue.main.async {
                                             switch profileResult {
                                             case .success(let profile):
@@ -119,7 +129,7 @@ struct ContentView: View {
         .padding()
         .onAppear {
             // Automatically fetch profile if the user is already authenticated
-            if let jwt = accessToken, let userDID = did {
+            if let jwt = keychain.get("accessToken"), let userDID = keychain.get("userDID") {
                 // User is already logged in, so fetch the profile
                 BlueskyAPI.shared.fetchProfile(accessJwt: jwt, actor: userDID) { profileResult in
                     DispatchQueue.main.async {
