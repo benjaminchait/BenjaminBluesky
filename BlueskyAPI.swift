@@ -113,5 +113,35 @@ class BlueskyAPI {
         task.resume()
     }
 
+    func postToFeed(accessJwt: String, text: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        let url = baseURL.appendingPathComponent("app.bsky.feed.post")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(accessJwt)", forHTTPHeaderField: "Authorization")
+        
+        let body: [String: Any] = [
+            "text": text
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+        } catch {
+            completion(.failure(error))
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: request) { _, _, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            completion(.success(()))
+        }
+        
+        task.resume()
+    }
+
 
 }

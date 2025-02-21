@@ -12,8 +12,10 @@ struct ContentView: View {
     @State private var password = ""
     @State private var authMessage = "Enter credentials and tap Login"
     @State private var accessJwt: String?
-    
     @State private var profile: Profile?
+    
+    @State private var postText = ""
+    @State private var postMessage = "Type a post and submit it!"
 
     var body: some View {
         VStack {
@@ -37,6 +39,30 @@ struct ContentView: View {
                         Text(description)
                             .padding()
                     }
+                
+                    TextField("Write your post here", text: $postText)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .padding()
+                                        
+                                        Button("Post to Feed") {
+                                            guard let jwt = accessJwt else { return }
+                                            BlueskyAPI.shared.postToFeed(accessJwt: jwt, text: postText) { result in
+                                                DispatchQueue.main.async {
+                                                    switch result {
+                                                    case .success:
+                                                        postMessage = "Post successful!"
+                                                        postText = "" // Clear text field after posting
+                                                    case .failure(let error):
+                                                        postMessage = "Error posting: \(error.localizedDescription)"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        .padding()
+                                        
+                                        Text(postMessage)
+                                            .padding()
+                    
                 }
             } else {
                 TextField("Username", text: $username)
