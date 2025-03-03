@@ -24,9 +24,9 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            if let profile = profile {
+            if let fetchedProfile = profile {
                 VStack {
-                    if let avatar = profile.avatar, let url = URL(string: avatar) {
+                    if let avatar = fetchedProfile.avatar, let url = URL(string: avatar) {
                         AsyncImage(url: url) { image in
                             image.resizable()
                         } placeholder: {
@@ -36,11 +36,11 @@ struct ContentView: View {
                         .clipShape(Circle())
                     }
                     
-                    Text(profile.displayName ?? profile.handle)
+                    Text(fetchedProfile.displayName ?? fetchedProfile.handle)
                         .font(.title)
                         .padding()
                     
-                    if let description = profile.description {
+                    if let description = fetchedProfile.description {
                         Text(description)
                             .padding()
                     }
@@ -50,7 +50,7 @@ struct ContentView: View {
                         .padding()
                                         
                     Button("Post to Feed") {
-                        guard let jwt = accessToken, let userDID = did else {
+                        guard let jwt = keychain.get("accessToken"), let userDID = keychain.get("userDID") else {
                             postMessage = "Missing authentication details!"
                             return
                         }
@@ -72,13 +72,23 @@ struct ContentView: View {
                     Text(postMessage)
                         .padding()
                     
-//                    Button("Logout") {
-//                        // Clear Keychain on logout
-//                        keychain.delete("accessToken")
-//                        keychain.delete("userDID")
-//                        authMessage = "Logged out"
-//                        profile = nil  // Clear the profile data
-//                    }
+                    Button("Logout") {
+                        // Clear Keychain
+                        keychain.delete("accessToken")
+                        keychain.delete("userDID")
+
+                        // Explicitly clear @AppStorage values
+                        accessToken = nil
+                        did = nil
+
+                        // Clear profile
+                        DispatchQueue.main.async {
+                            profile = nil
+                            authMessage = "Logged out"
+                        }
+                    }
+                    
+                    
                     
                 }
             } else {
@@ -95,6 +105,7 @@ struct ContentView: View {
                         DispatchQueue.main.async {
                             switch result {
                             case .success(let auth):
+                                print("Authenticated with JWT: \(auth.accessJwt)")  // Debugging line
                                 // Store JWT and DID securely in Keychain
                                 keychain.set(auth.accessJwt, forKey: "accessToken")
                                 keychain.set(auth.did, forKey: "userDID")
@@ -119,6 +130,7 @@ struct ContentView: View {
                             }
                         }
                     }
+
                 }
                 .padding()
                 
